@@ -24,17 +24,26 @@ def read_notes() -> str:
     with open("notes.txt") as f:
         return f.read()
 
-tools = {"get_time": get_time, "add_numbers": add_numbers, "save_note": save_note, "read_notes": read_notes}
+def read_file(filename: str) -> str:
+    """Read a text file from the agent's folder."""
+    name = os.path.basename(filename)
+    if not os.path.exists(name):
+        return f"No file called {name}."
+    with open(name) as f:
+        return f.read()[:3000]
 
-SYSTEM = {"role": "system", "content": "Only use get_time when asked the time. Only use add_numbers when asked to add numbers. Use save_note when asked to note or remember something. Use read_notes when asked about notes. For everything else, answer normally without tools."}
+tools = {"get_time": get_time, "add_numbers": add_numbers, "save_note": save_note, "read_notes": read_notes, "read_file": read_file}
+
+SYSTEM = {"role": "system", "content": "Only use get_time when asked the time. Only use add_numbers when asked to add numbers. Use save_note when asked to note or remember something. Use read_notes when asked about notes. Use read_file when asked to read or open a file. For everything else, answer normally without tools."}
 
 MEMORY_FILE = "memory.json"
+MEMORY_LIMIT = 20
 if os.path.exists(MEMORY_FILE):
     with open(MEMORY_FILE) as f:
         memory = json.load(f)
 else:
     memory = []
-history = [SYSTEM] + memory
+history = [SYSTEM] + memory[-MEMORY_LIMIT:]
 
 MAX_STEPS = 5
 
