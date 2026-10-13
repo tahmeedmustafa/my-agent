@@ -1,4 +1,6 @@
 import ollama
+import json
+import os
 from datetime import datetime
 
 def get_time():
@@ -10,7 +12,16 @@ def add_numbers(a: int, b: int) -> int:
     return int(a) + int(b)
 
 tools = {"get_time": get_time, "add_numbers": add_numbers}
-history = []
+
+SYSTEM = {"role": "system", "content": "Only use get_time when asked the time. Only use add_numbers when asked to add numbers. For everything else, answer normally without tools."}
+
+MEMORY_FILE = "memory.json"
+if os.path.exists(MEMORY_FILE):
+    with open(MEMORY_FILE) as f:
+        memory = json.load(f)
+else:
+    memory = []
+history = [SYSTEM] + memory
 
 while True:
     msg = input("You: ")
@@ -26,6 +37,13 @@ while True:
             name = call.function.name
             args = call.function.arguments
             print(f"[tool] {name}({args})")
-            result = tools[name](**args)
+            try:
+                result = tools[name](**args)
+            except Exception as e:
+                result = f"Tool error: {e}"
             history.append({"role": "tool", "content": str(result), "tool_name": name})
     print("Agent:", reply.message.content)
+    memory.append({"role": "user", "content": msg})
+    memory.append({"role": "assistant", "content": reply.message.content})
+    with open(MEMORY_FILE, "w") as f:
+        json.dump(memory, f, indent=2)
