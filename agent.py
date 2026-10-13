@@ -11,9 +11,22 @@ def add_numbers(a: int, b: int) -> int:
     """Add two numbers together."""
     return int(a) + int(b)
 
-tools = {"get_time": get_time, "add_numbers": add_numbers}
+def save_note(text: str) -> str:
+    """Save a note so it can be read later."""
+    with open("notes.txt", "a") as f:
+        f.write(text + "\n")
+    return "Note saved."
 
-SYSTEM = {"role": "system", "content": "Only use get_time when asked the time. Only use add_numbers when asked to add numbers. For everything else, answer normally without tools."}
+def read_notes() -> str:
+    """Read all saved notes."""
+    if not os.path.exists("notes.txt"):
+        return "No notes yet."
+    with open("notes.txt") as f:
+        return f.read()
+
+tools = {"get_time": get_time, "add_numbers": add_numbers, "save_note": save_note, "read_notes": read_notes}
+
+SYSTEM = {"role": "system", "content": "Only use get_time when asked the time. Only use add_numbers when asked to add numbers. Use save_note when asked to note or remember something. Use read_notes when asked about notes. For everything else, answer normally without tools."}
 
 MEMORY_FILE = "memory.json"
 if os.path.exists(MEMORY_FILE):
@@ -23,12 +36,14 @@ else:
     memory = []
 history = [SYSTEM] + memory
 
+MAX_STEPS = 5
+
 while True:
     msg = input("You: ")
     if msg == "bye":
         break
     history.append({"role": "user", "content": msg})
-    while True:
+    for step in range(MAX_STEPS):
         reply = ollama.chat(model="llama3.2", messages=history, tools=list(tools.values()))
         history.append(reply.message)
         if not reply.message.tool_calls:
@@ -42,8 +57,9 @@ while True:
             except Exception as e:
                 result = f"Tool error: {e}"
             history.append({"role": "tool", "content": str(result), "tool_name": name})
-    print("Agent:", reply.message.content)
+    text = reply.message.content or "(Stopped: too many tool calls.)"
+    print("Agent:", text)
     memory.append({"role": "user", "content": msg})
-    memory.append({"role": "assistant", "content": reply.message.content})
+    memory.append({"role": "assistant", "content": text})
     with open(MEMORY_FILE, "w") as f:
         json.dump(memory, f, indent=2)
