@@ -44,8 +44,8 @@ def write_file(filename: str, text: str) -> str:
 tools = {"get_time": get_time, "add_numbers": add_numbers, "save_note": save_note, "read_notes": read_notes, "read_file": read_file, "write_file": write_file}
 
 NEEDS_APPROVAL = ["write_file"]
+SYSTEM = {"role": "system", "content": "Only use get_time when asked the time. Only use add_numbers when asked to add numbers. Use save_note when asked to note or remember something. Use read_notes when asked about notes. Use read_file when asked to read or open a file. Use write_file when asked to create or write a file. If a job has more than one part, do one part at a time: use a tool, look at the result, then use the next tool, until the whole job is done. Only say a job is done if the tool results show it. For everything else, answer normally without tools."}
 
-SYSTEM = {"role": "system", "content": "Only use get_time when asked the time. Only use add_numbers when asked to add numbers. Use save_note when asked to note or remember something. Use read_notes when asked about notes. Use read_file when asked to read or open a file. Use write_file when asked to create or write a file. For everything else, answer normally without tools."}
 
 def log(name, args, result):
     with open("log.txt", "a") as f:
@@ -60,7 +60,7 @@ else:
     memory = []
 history = [SYSTEM] + memory[-MEMORY_LIMIT:]
 
-MAX_STEPS = 5
+MAX_STEPS = 10
 
 while True:
     msg = input("You: ")
@@ -72,7 +72,7 @@ while True:
         history.append(reply.message)
         if not reply.message.tool_calls:
             break
-        for call in reply.message.tool_calls:
+        for call in reply.message.tool_calls[:1]:
             name = call.function.name
             args = call.function.arguments
             print(f"[tool] {name}({args})")
