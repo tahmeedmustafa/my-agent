@@ -1,4 +1,4 @@
-\# My Agent
+ My Agent
 
 
 
@@ -6,43 +6,43 @@ A simple AI agent I built in Python. It runs on my own laptop using Ollama and t
 
 
 
-\## What it can do
+## What it can do
 
 
 
-\- Remembers past chats (memory.json)
+- Remembers past chats (memory.json)
 
-\- Tells the time and adds numbers
+- Tells the time and adds numbers
 
-\- Saves and reads notes
+- Saves and reads notes
 
-\- Reads and writes text files
+- Reads and writes text files
 
-\- Asks "Allow? y/n" before writing any file
+- Asks "Allow? y/n" before writing any file
 
-\- Keeps a log of every tool it uses (log.txt)
+- Keeps a log of every tool it uses (log.txt)
 
-\- Does big jobs one step at a time
-
-
-
-\## How to run it
+- Does big jobs one step at a time
 
 
 
-1\. Install Python and Ollama
-
-2\. Run: ollama pull llama3.2
-
-3\. Run: pip install ollama
-
-4\. Run: python agent.py
-
-5\. Type "bye" to stop
+## How to run it
 
 
 
-\## What I learned
+1. Install Python and Ollama
+
+2. Run: ollama pull llama3.2
+
+3. Run: pip install ollama
+
+4. Run: python agent.py
+
+5. Type "bye" to stop
+
+
+
+## What I learned
 
 
 
