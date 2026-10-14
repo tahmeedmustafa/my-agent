@@ -32,9 +32,24 @@ def read_file(filename: str) -> str:
     with open(name) as f:
         return f.read()[:3000]
 
-tools = {"get_time": get_time, "add_numbers": add_numbers, "save_note": save_note, "read_notes": read_notes, "read_file": read_file}
+def write_file(filename: str, text: str) -> str:
+    """Write text into a file in the agent's folder."""
+    name = os.path.basename(filename)
+    if name in ("agent.py", "memory.json"):
+        return f"Not allowed to change {name}."
+    with open(name, "w") as f:
+        f.write(text)
+    return f"Wrote {name}."
 
-SYSTEM = {"role": "system", "content": "Only use get_time when asked the time. Only use add_numbers when asked to add numbers. Use save_note when asked to note or remember something. Use read_notes when asked about notes. Use read_file when asked to read or open a file. For everything else, answer normally without tools."}
+tools = {"get_time": get_time, "add_numbers": add_numbers, "save_note": save_note, "read_notes": read_notes, "read_file": read_file, "write_file": write_file}
+
+NEEDS_APPROVAL = ["write_file"]
+
+SYSTEM = {"role": "system", "content": "Only use get_time when asked the time. Only use add_numbers when asked to add numbers. Use save_note when asked to note or remember something. Use read_notes when asked about notes. Use read_file when asked to read or open a file. Use write_file when asked to create or write a file. For everything else, answer normally without tools."}
+
+def log(name, args, result):
+    with open("log.txt", "a") as f:
+        f.write(f"{datetime.now():%Y-%m-%d %H:%M} {name}({args}) -> {str(result)[:100]}\n")
 
 MEMORY_FILE = "memory.json"
 MEMORY_LIMIT = 20
@@ -61,10 +76,18 @@ while True:
             name = call.function.name
             args = call.function.arguments
             print(f"[tool] {name}({args})")
+            if name in NEEDS_APPROVAL:
+                ok = input("Allow? y/n: ")
+                if ok.lower() != "y":
+                    result = "DENIED. The user said no. The file was NOT written. Tell the user you did not do it."
+                    log(name, args, result)
+                    history.append({"role": "tool", "content": result, "tool_name": name})
+                    continue
             try:
                 result = tools[name](**args)
             except Exception as e:
                 result = f"Tool error: {e}"
+            log(name, args, result)
             history.append({"role": "tool", "content": str(result), "tool_name": name})
     text = reply.message.content or "(Stopped: too many tool calls.)"
     print("Agent:", text)
